@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 version: '2'
 
 services:
@@ -8,3 +9,126 @@ services:
     volumes:
       - ./src:/usr/src/app/src
     command: "npm start"
+=======
+version: '3.2'
+
+services:
+  postgres:
+    image: postgres:9.5.6
+    expose:
+      - "5432"
+
+  redis:
+    image: redis:4-alpine
+    expose:
+      - "6379"
+
+  nginx:
+    image: yacsrcos/yacs-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    links:
+      - core
+    volumes:
+      - ./ssl:/etc/ssl/yacs
+      - dist-web:/usr/src/app/dist-web
+
+  core:
+    image: yacsrcos/yacs
+    environment:
+      - RAILS_ENV
+      - SECRET_KEY_BASE
+      - SECRET_TOKEN
+      - WEB_CONCURRENCY
+      - MAX_THREADS
+    volumes:
+      - ./ssl:/etc/ssl/yacs
+    depends_on:
+      - postgres
+      - redis
+    command: bundle exec puma -C config/puma.rb
+    expose:
+      - "4100"
+    extra_hosts:
+      - "kafka-server:138.197.2.46"
+   
+  core-consumer:
+    image: yacsrcos/yacs
+    environment:
+      - RAILS_ENV
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+        #      - zookeeper
+    command: bundle exec karafka server
+
+  web:
+    image: yacsrcos/yacs-web
+    volumes:
+      - dist-web:/usr/src/app/dist-web
+    depends_on:
+      - core
+    expose:
+      - "4200"
+
+
+  # admin:
+  #   image: yacsrcos/yacs-admin
+  #   depends_on:
+  #     - core
+  #   expose:
+  #     - "4300"
+
+  users:
+    image: yacsrcos/yacs-users
+    depends_on:
+      - postgres
+      - redis
+    expose:
+      - "4400"
+
+  malg:
+    image: yacsrcos/yacs-malg
+    depends_on:
+      - kafka
+      - zookeeper
+      - redis
+    expose:
+      - "4500"
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka:latest
+    # ports:
+    #  - target: 9094
+    #    published: 9094
+    #    protocol: tcp
+    #    mode: host
+    #ports:
+    #  - "9094:9094"
+    depends_on:
+      - zookeeper
+    expose:
+      - "9094"
+      - "9092"
+    hostname: kafka
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"      
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_ADVERTISED_PROTOCOL_NAME: OUTSIDE
+      KAFKA_ADVERTISED_PORT: 9094
+      KAFKA_PROTOCOL_NAME: INSIDE
+      KAFKA_PORT: 9092
+      #KAFKA_CREATE_TOPICS: "create:1:1,update:1:1,delete:1:1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  dist-web:
+>>>>>>> 121487619267cdc006d1f8bcacb7a44679642802
