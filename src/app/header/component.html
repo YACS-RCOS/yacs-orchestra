@@ -1,0 +1,17 @@
+<nav id="headerbar">
+  <table id="navtable">
+    <tr>
+      <td class="sidelink" id="page-title">
+        <a [routerLink]="['/']">YACS <span class="sub"> beta </span></a>
+      <td>
+        <span id="searchcontainer">
+          <img id="searchglyph" src="assets/images/search.svg"/>
+          <input #term id="searchbar" placeholder="Search Fall 2017" (keyup.enter)="search(term.value)"/>
+        </span>
+      </td>
+      <td class="sidelink" id="schedule-btn">
+        <a [routerLink]="['/schedules']">Schedule</a>
+      </td>
+    </tr>
+  </table>
+</nav>
